@@ -1,38 +1,57 @@
 Function Make-CfFile {
 	[CmdletBinding()]  
-    Param(  
-        [ValidateNotNullOrEmpty()]  
-        [ValidateScript({(Test-Path $_) -and ((Get-Item $_).Extension -eq ".json")})]  
+    Param( 
         [Parameter(Mandatory=$True)]  
-        [string]$Template,
-        [Parameter(Mandatory=$True)]  
-        [string]$IniFile
+        [string]$IniFile,
+        [Hashtable]$extraParam=@{},
+        [string]$teamplatePath=$PSScriptRoot+"\templates"
     )
-    $iniContent=Get-IniContent D:\git\EasyAWSEnv\InstanceSample\MyInstances.ini
-    $jsonContent=@{"AWSTemplateFormatVersion"="2010-09-09";"Description"="AT Template"}
-
-    if($iniContent["GLOBAL"]){
-        $globalContent=$iniContent["GLOBAL"]
-        $iniContent.Remove("GLOBAL")
-        foreach($k in $globalContent.keys){
-            $iniContent.Keys|%{$iniContent[$_][$k]=$globalContent[$k]}
-        }
+    $iniContent=Get-IniContent $IniFile
+    $jsonContent=@()
+    $jsonContent+='{'
+    $jsonContent+='    "AWSTemplateFormatVersion": "2010-09-09",'
+    $jsonContent+='    "Description": "",'
+    $jsonContent+='    "Resources": {'
+        
+    if(-not $iniContent["GLOBAL"]){
+        $iniContent["GLOBAL"]=@{}
+    }
+    if($extraParam.Count -gt 0){$extraParam.Keys|%{$iniContent["GLOBAL"][$_]=$extraParam[$_]}}
+    $globalContent=$iniContent["GLOBAL"]
+    $iniContent.Remove("GLOBAL")
+    foreach($k in $globalContent.keys){
+        $iniContent.Keys|%{$iniContent[$_][$k]=$globalContent[$k]}
     }
 
     foreach($k in $iniContent.Keys){
-        Search-InstanceInfo -Type $iniContent[$k]["Role"] -values $iniContent[$k] -templatefile D:\git\EasyAWSEnv\cf_template.json
+        try{
+            $jsonContent+=(Collect-InstanceInfo -Section $iniContent[$k] -templatePath $teamplatePath)
+        }
+        catch [Exception]{
+            $_.Exception.message
+
+        }
     }
+    $jsonContent[$jsonContent.Count-1]=$jsonContent[$jsonContent.Count-1].TrimEnd(",")
+    $jsonContent+="    }"
+    $jsonContent+="}"
+    $jsonContent|Out-File D:\git\EasyAWSEnv\1.json
 }
 
-Function Search-InstanceInfo{
+Function Collect-InstanceInfo{
     Param(
-        [Parameter(Mandatory=$True)]  
-        [string]$Type,
-        [Parameter(Mandatory=$True)]  
-        [string]$values,  
-        [string]$templatefile=(split-path -parent $MyInvocation.MyCommand.Definition)+"cf_template.json"
+        [Parameter(Mandatory=$True)]
+        [HashTable]$Section, 
+        [string]$templatePath
     )
-    ((get-content "D:\git\EasyAWSEnv\cf_template.json")|ConvertFrom-Json)["Resources"][$Type]
+    $Section["ResourceName"]=($Section["ComputerName"]+$Section["Role"]).replace("._","")
+    $templateContent=Get-Content "$templatePath\$($Section['Role'])"
+    $Section.Keys|%{$key=$_;$templateContent=($templateContent|%{$_.replace("#{$key}",$Section[$key])})}
+    $matchItems=$templateContent -join "`n"| select-string -Pattern "#\{(.*)\}" -AllMatches | % { $_.Matches } |%{$_.Groups[1].value}
+    if($matchItems){
+        throw "The following items need to be replaced in templates for $($Section["ComputerName"]) :$matchItems"
+    }
+    return $templateContent
 }
 
 Function Get-IniContent {     
