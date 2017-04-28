@@ -25,7 +25,7 @@ Function Make-CfFile {
 
     foreach($k in $iniContent.Keys){
         try{
-            $jsonContent+=(Collect-InstanceInfo -Section $iniContent[$k] -templatePath $teamplatePath)
+            $jsonContent+=(Collect-InstanceInfo -Key $k -Section $iniContent[$k] -templatePath $teamplatePath)
         }
         catch [Exception]{
             $_.Exception.message
@@ -35,17 +35,21 @@ Function Make-CfFile {
     $jsonContent[$jsonContent.Count-1]=$jsonContent[$jsonContent.Count-1].TrimEnd(",")
     $jsonContent+="    }"
     $jsonContent+="}"
-    $jsonContent|Out-File D:\git\EasyAWSEnv\1.json
+    $jsonContent|Out-File "$env:temp\temp.json"
 }
 
 Function Collect-InstanceInfo{
     Param(
         [Parameter(Mandatory=$True)]
+        [string]$key,
         [HashTable]$Section, 
         [string]$templatePath
     )
-    $Section["ResourceName"]=($Section["ComputerName"]+$Section["Role"]).replace("._","")
+    $Section["ResourceName"]=$key.replace("._","")
     $templateContent=Get-Content "$templatePath\$($Section['Role'])"
+    $EnvVariables=@()
+    $Section.Keys|%{$EnvVariables+="""[Environment]::SetEnvironmentVariable('$_','$($Section[$_])','Machine')"",`n"}
+    $Section["EnvVariables"]=$EnvVariables
     $Section.Keys|%{$key=$_;$templateContent=($templateContent|%{$_.replace("#{$key}",$Section[$key])})}
     $matchItems=$templateContent -join "`n"| select-string -Pattern "#\{(.*)\}" -AllMatches | % { $_.Matches } |%{$_.Groups[1].value}
     if($matchItems){
