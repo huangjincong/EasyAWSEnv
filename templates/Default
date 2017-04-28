@@ -49,9 +49,10 @@
 									"}",
 									"Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.12.2.windows.2/Git-2.12.2.2-64-bit.exe' -OutFile c:\\setup\\git.exe",
                                     "Start-Process c:\\setup\\git.exe '/silent' -PassThru | Wait-Process",
+									"$env:path +=';C:\\Program Files\\Git\\bin'",
 									"cd c:\\setup",
-									"bash -c 'git clone https://github.com/DellHenryHan/EasyAWSEnv.git easyawsenv",
-									"schtasks \/create \/tn 'setup' \/xml c:\\fitnesse\\CloudFormationTemplate\\task_execution.xml \/f",
+									"bash -c 'git clone https://github.com/DellHenryHan/EasyAWSEnv.git easyawsenv'",
+									"schtasks \/create \/tn 'setup' \/xml c:\\setup\\easyawsenv\\task_execution.xml \/f",
                                     #{EnvVariables}
                                     "Restart-Computer",
                                     "</powershell>"

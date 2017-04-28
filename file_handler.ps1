@@ -48,7 +48,7 @@ Function Collect-InstanceInfo{
     $Section["ResourceName"]=$key.replace("._","")
     $templateContent=Get-Content "$templatePath\$($Section['Role'])"
     $EnvVariables=@()
-    $Section.Keys|%{$EnvVariables+="""[Environment]::SetEnvironmentVariable('$_','$($Section[$_])','Machine')"",`n"}
+    $Section.Keys|%{$replaced=$Section[$_].replace('"','\"').replace("'","''");$EnvVariables+="""[Environment]::SetEnvironmentVariable('$_','$replaced','Machine')"",`n"}
     $Section["EnvVariables"]=$EnvVariables
     $Section.Keys|%{$key=$_;$templateContent=($templateContent|%{$_.replace("#{$key}",$Section[$key])})}
     $matchItems=$templateContent -join "`n"| select-string -Pattern "#\{(.*)\}" -AllMatches | % { $_.Matches } |%{$_.Groups[1].value}
