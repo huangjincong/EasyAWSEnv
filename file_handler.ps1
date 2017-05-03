@@ -4,6 +4,7 @@ Function Make-CfFile {
         [Parameter(Mandatory=$True)]  
         [string]$IniFile,
         [Hashtable]$extraParam=@{},
+        [string]$OutFile="$env:temp\temp.json",
         [string]$teamplatePath=$PSScriptRoot+"\templates"
     )
     $iniContent=Get-IniContent $IniFile
@@ -14,7 +15,7 @@ Function Make-CfFile {
     $jsonContent+='    "Resources": {'
         
     if(-not $iniContent["GLOBAL"]){
-        $iniContent["GLOBAL"]=@{}
+        $iniContent["GLOBAL"]
     }
     if($extraParam.Count -gt 0){$extraParam.Keys|%{$iniContent["GLOBAL"][$_]=$extraParam[$_]}}
     $globalContent=$iniContent["GLOBAL"]
@@ -35,7 +36,7 @@ Function Make-CfFile {
     $jsonContent[$jsonContent.Count-1]=$jsonContent[$jsonContent.Count-1].TrimEnd(",")
     $jsonContent+="    }"
     $jsonContent+="}"
-    $jsonContent|Out-File "$env:temp\temp.json"
+    $jsonContent|Out-File $OutFile
 }
 
 Function Collect-InstanceInfo{
@@ -48,7 +49,16 @@ Function Collect-InstanceInfo{
     $Section["ResourceName"]=$key.replace("._","")
     $templateContent=Get-Content "$templatePath\$($Section['Role'])"
     $EnvVariables=@()
-    $Section.Keys|%{$replaced=$Section[$_].replace('"','\"').replace("'","''");$EnvVariables+="""[Environment]::SetEnvironmentVariable('$_','$replaced','Machine')"",`n"}
+    $Section.Keys|%{$replaced=$Section[$_].replace('\','\\').replace('"','\"').replace("'","''");$EnvVariables+="""[Environment]::SetEnvironmentVariable('$_','$replaced','Machine')"",`n"}
+    if($Section["DC"]){
+        $Section["FetchDcIp"]='{ "Fn::Join": ["", ["[Environment]::SetEnvironmentVariable(''DcIp'',''",{"Fn::GetAtt": ["'+$Section["DC"]+'", "PrivateIp"]},"'',''Machine'')"]]},'
+    }
+    else{
+        $Section["FetchDcIp"]=""
+    }
+    if(-not $Section["Tag"]){
+        $Section["Tag"]=""
+    }
     $Section["EnvVariables"]=$EnvVariables
     $Section.Keys|%{$key=$_;$templateContent=($templateContent|%{$_.replace("#{$key}",$Section[$key])})}
     $matchItems=$templateContent -join "`n"| select-string -Pattern "#\{(.*)\}" -AllMatches | % { $_.Matches } |%{$_.Groups[1].value}

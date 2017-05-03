@@ -1,0 +1,130 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "AWS CloudFormation for Prerequisite resources",
+	"Resources": {
+		"PreRole": {
+		  "Type": "AWS::IAM::Role",
+		  "Properties": {
+			"AssumeRolePolicyDocument": {
+			  "Version": "2012-10-17",
+			  "Statement": [
+				{
+				  "Effect": "Allow",
+				  "Principal": {
+					"Service": [
+					  "ec2.amazonaws.com.cn"
+					]
+				  },
+				  "Action": [
+					"sts:AssumeRole"
+				  ]
+				}
+			  ]
+			},
+			"Path": "/",
+			"Policies": [ {
+               "PolicyName": "PrePolicy",
+               "PolicyDocument": {
+					  "Version" : "2012-10-17",
+					  "Statement": [
+						{
+						  "Effect": "Allow",
+						  "Action": [
+							"cloudformation:*",
+							"ec2:*",
+							"s3:*",
+							"iam:PassRole"
+						  ],
+						  "Resource": "*"
+						}
+					  ]
+                }
+               } ]
+            }
+		},
+		"PreRoleProfile": {
+			 "Type": "AWS::IAM::InstanceProfile",
+			 "Properties": {
+				"Path": "/",
+				"Roles": [ {
+				   "Ref": "PreRole"
+				} ]
+			 }
+		},
+		"VPC"         : {
+            "Type" : "AWS::EC2::VPC",
+            "Properties" : {
+                "CidrBlock" : "10.1.0.0/16",
+                "EnableDnsHostnames" : "true"
+            }
+        },
+        "InternetGateWay" : {
+            "Type" : "AWS::EC2::InternetGateway",
+            "DependsOn" : "VPC"
+        },
+        "AttachGateway" : {
+           "Type" : "AWS::EC2::VPCGatewayAttachment",
+           "DependsOn" : "VPC",
+           "Properties" : {
+              "VpcId" : { "Ref" : "VPC" },
+              "InternetGatewayId" : { "Ref" : "InternetGateWay" }
+           }
+        },
+        "SubNet" : {
+            "Type" : "AWS::EC2::Subnet",
+            "DependsOn" : "AttachGateway",
+            "Properties" : {
+                "CidrBlock" : "10.1.0.0/24",
+                "MapPublicIpOnLaunch" : "True",
+                "VpcId" : { "Ref" : "VPC" }
+            }
+        },
+        "RouteTable" : {
+             "Type" : "AWS::EC2::RouteTable",
+             "DependsOn" : "SubNet",
+             "Properties" : {
+                "VpcId" : { "Ref" : "VPC" }
+             }
+        },
+        "Route" : {
+             "Type" : "AWS::EC2::Route",
+             "DependsOn" : "RouteTable",
+             "Properties" : {
+                "RouteTableId" : { "Ref" : "RouteTable" },
+                "DestinationCidrBlock" : "0.0.0.0/0",
+                "GatewayId" : { "Ref" : "InternetGateWay" }
+             }
+        },
+        "SubnetRouteTableAssociation" : {
+             "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+             "DependsOn" : "Route",
+             "Properties" : {
+                "SubnetId" : { "Ref" : "SubNet" },
+                "RouteTableId" : { "Ref" : "RouteTable" }
+             }
+        }
+	},
+	"Outputs" : {
+		  "PreRoleProfileArn" : {
+			"Description" : "The Role Profile Arn",
+			"Value" : {"Fn::GetAtt": ["PreRoleProfile","Arn"]},
+			"Export" : {
+			  "Name" : "PreRoleProfileArn"
+			}
+		  },
+		  "PreRoleProfileName" : {
+			"Description" : "The PreRole Profile Name",
+			"Value" : {"Ref": "PreRoleProfile"},
+			"Export" : {
+			  "Name" : "PreRoleProfileName"
+			}
+		  },
+		  "PreSubnet" : {
+			"Description" : "The Prerequisite Subnet",
+			"Value" : {"Ref": "SubNet"},
+			"Export" : {
+			  "Name" : "PreSubnet"
+			}
+		  }
+	}
+}
