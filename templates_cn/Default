@@ -1,7 +1,7 @@
         "#{ResourceName}": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
-				"InstanceType" : "m4.large",
+				"InstanceType" : "#{InstanceType}",
                 "ImageId":#{ImageId},
                 "SubnetId": #{SubnetId},
 				"IamInstanceProfile": #{InstanceRoleProfile},
