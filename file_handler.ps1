@@ -11,7 +11,7 @@ Function Make-CfFile {
     $jsonContent=@()
     $jsonContent+='{'
     $jsonContent+='    "AWSTemplateFormatVersion": "2010-09-09",'
-    $jsonContent+='    "Description": "",'
+    $jsonContent+='    "Description": "Template composed by easyawsenv",'
     $jsonContent+='    "Resources": {'
         
     if(-not $iniContent["GLOBAL"]){
