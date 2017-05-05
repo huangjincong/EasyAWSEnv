@@ -13,7 +13,7 @@
 				"Tags": [
                     {
                         "Key" : "Name",
-                        "Value" : "#{Tag}"
+                        "Value" : "#{InstanceName}"
                     }
                 ],
                 "UserData": {
