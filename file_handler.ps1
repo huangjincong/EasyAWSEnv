@@ -30,7 +30,7 @@ Function Make-CfFile {
         }
         catch [Exception]{
             $_.Exception.message
-
+            return
         }
     }
     $jsonContent[$jsonContent.Count-1]=$jsonContent[$jsonContent.Count-1].TrimEnd(",")
@@ -56,8 +56,11 @@ Function Collect-InstanceInfo{
     else{
         $Section["FetchDcIp"]=""
     }
-    if(-not $Section["Tag"]){
-        $Section["Tag"]=""
+    if(-not $Section["InstanceName"]){
+        $Section["InstanceName"]=""
+    }
+    if(-not $Section["InstanceRoleProfile"]){
+        $Section["InstanceRoleProfile"]='""'
     }
     $Section["EnvVariables"]=$EnvVariables
     $Section.Keys|%{$key=$_;$templateContent=($templateContent|%{$_.replace("#{$key}",$Section[$key])})}
