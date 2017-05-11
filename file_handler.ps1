@@ -5,7 +5,7 @@ Function Make-CfFile {
         [string]$IniFile,
         [Hashtable]$extraParam=@{},
         [string]$OutFile="$env:temp\temp.json",
-        [string]$teamplatePath=$PSScriptRoot+"\templates"
+        [string]$templatePath=$PSScriptRoot+"\templates"
     )
     $iniContent=Get-IniContent $IniFile
     $jsonContent=@()
@@ -26,7 +26,7 @@ Function Make-CfFile {
 
     foreach($k in $iniContent.Keys){
         try{
-            $jsonContent+=(Collect-InstanceInfo -Key $k -Section $iniContent[$k] -templatePath $teamplatePath)
+            $jsonContent+=(Collect-InstanceInfo -Key $k -Section $iniContent[$k] -templatePath $templatePath)
         }
         catch [Exception]{
             $_.Exception.message

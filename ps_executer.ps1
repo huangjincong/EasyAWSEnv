@@ -13,7 +13,7 @@ $basedir=Split-Path $step_file
 if(-not (Test-Path $step_file)){
 $step_xml=[xml]"<steps></steps>"
 $top=$step_xml.SelectSingleNode("//steps")
-Get-ChildItem env:|?{$_.name -match "step\d*"}|Sort-Object {[int]$_.name.substring(4)}|%{$e = $step_xml.CreateElement($_.name);$e.InnerText=$_.value;$top.AppendChild($e)}
+Get-ChildItem env:|?{$_.name -match "step\d*"}|Sort-Object {[float]$_.name.substring(4)}|%{$e = $step_xml.CreateElement($_.name);$e.InnerText=$_.value;$top.AppendChild($e)}
 $step_xml.save($step_file)
 }
 $logfile="$basedir\setup.log"

@@ -2,13 +2,13 @@
             "Type": "AWS::EC2::SpotFleet",
             "Properties": {
                 "SpotFleetRequestConfigData": {
-                    "IamFleetRole": "#{IAMRole}",
+                    "IamFleetRole": #{IAMRole},
                     "SpotPrice": "0.5",
                     "TargetCapacity": 1,
                     "LaunchSpecifications": [{
                         "EbsOptimized": "true",
                         "InstanceType": "m4.large",
-                        "ImageId":"#{ImageId}",
+                        "ImageId":#{ImageId},
                         "BlockDeviceMappings": [{
                                 "DeviceName": "/dev/sda1",
                                 "Ebs": {
@@ -30,7 +30,7 @@
                             "AssociatePublicIpAddress": "true",
                             "DeviceIndex": "0",
                             "DeleteOnTermination": "true",
-                            "SubnetId": "#{SubnetId}"
+                            "SubnetId": #{SubnetId}
                         }],
                         "UserData": {
                             "Fn::Base64": {
@@ -47,13 +47,14 @@
                                     "Set-ItemProperty $RegPath 'DefaultUsername' -Value 'Administrator' -type String",
                                     "Set-ItemProperty $RegPath 'DefaultPassword' -Value 'Qwerty123' -type String",
 									"}",
-									"Invoke-WebRequest 'https://github.com/git-for-windows/git/releases/download/v2.12.2.windows.2/Git-2.12.2.2-64-bit.exe' -OutFile c:\\setup\\git.exe",
+									"Invoke-WebRequest 'https://npm.taobao.org/mirrors/git-for-windows/2.12.0.windows.1/Git-2.12.0-64-bit.exe' -OutFile c:\\setup\\git.exe",
                                     "Start-Process c:\\setup\\git.exe '/silent' -PassThru | Wait-Process",
 									"$env:path +=';C:\\Program Files\\Git\\bin'",
 									"cd c:\\setup",
 									"bash -c 'git clone https://github.com/DellHenryHan/EasyAWSEnv.git easyawsenv'",
 									"schtasks \/create \/tn 'setup' \/xml c:\\setup\\easyawsenv\\task_execution.xml \/f",
                                     #{EnvVariables}
+									#{FetchDcIp}
                                     "Restart-Computer",
                                     "</powershell>"
                                 ]]
