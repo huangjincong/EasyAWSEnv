@@ -37,8 +37,7 @@
 									"$env:path +=';C:\\Program Files\\Git\\bin'",
 									"cd c:\\setup",
 									"bash -c 'git clone https://github.com/DellHenryHan/EasyAWSEnv.git easyawsenv'",
-									"schtasks /delete /tn setup /f",
-									"schtasks \/create \/tn 'setup' \/xml c:\\setup\\easyawsenv\\task_execution.xml \/f",
+									"if(-not (schtasks /query /tn 'setup')){schtasks /create /tn 'setup' /xml c:\\setup\\easyawsenv\\task_execution.xml /f}",
 									"Get-ChildItem Env:\\step*|%{[Environment]::SetEnvironmentVariable($_.Name,'','Machine')}",
                                     #{EnvVariables}
 									#{FetchDcIp}
