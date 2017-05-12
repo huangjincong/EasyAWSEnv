@@ -1,5 +1,4 @@
 Param(
-  [parameter(Mandatory=$true)]
   [string]
   $step_file="c:\setup\steps.xml"
 )
