@@ -20,16 +20,9 @@
                             "Fn::Base64": {
                                 "Fn::Join": ["\n", [
                                     "<powershell>",
+									"Get-NetIPInterface|%{Set-DnsClientServerAddress -InterfaceIndex $_.ifIndex -ResetServerAddresses}",
 									"remove-item c:\\setup -Recurse -Force",
 									"new-item -ItemType Directory c:\\setup",
-									"$RegPath = 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon'",
-									"$autologon=((Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon' -Name 'AutoAdminLogon')|select AutoAdminLogon).AutoAdminLogon",
-									"if($autologon -ne '1'){",
-                                    "net user Administrator 'Qwerty123'",
-                                    "Set-ItemProperty $RegPath 'AutoAdminLogon' -Value '1' -type String",
-                                    "Set-ItemProperty $RegPath 'DefaultUsername' -Value 'Administrator' -type String",
-                                    "Set-ItemProperty $RegPath 'DefaultPassword' -Value 'Qwerty123' -type String",
-									"}",
 									"if(-not (Get-ChildItem 'HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall'|?{$_.GetValue('DisplayName') -like 'Git*'})){",
 									"Invoke-WebRequest 'https://npm.taobao.org/mirrors/git-for-windows/2.12.0.windows.1/Git-2.12.0-64-bit.exe' -OutFile c:\\setup\\git.exe",
                                     "Start-Process c:\\setup\\git.exe '/silent' -PassThru | Wait-Process",
@@ -37,7 +30,9 @@
 									"$env:path +=';C:\\Program Files\\Git\\bin'",
 									"cd c:\\setup",
 									"bash -c 'git clone https://github.com/DellHenryHan/EasyAWSEnv.git easyawsenv'",
-									"if(-not (schtasks /query /tn 'setup')){schtasks /create /tn 'setup' /xml c:\\setup\\easyawsenv\\task_execution.xml /f}",
+									"schtasks /delete /tn 'ps_executor' /f",
+									"schtasks /delete /tn 'setup' /f",
+									"schtasks /create /tn 'setup' /xml c:\\setup\\easyawsenv\\task_execution.xml /f",
 									"Get-ChildItem Env:\\step*|%{[Environment]::SetEnvironmentVariable($_.Name,'','Machine')}",
                                     #{EnvVariables}
 									#{FetchDcIp}
